@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"strings"
 	"testing"
 	"time"
 
@@ -26,24 +25,20 @@ func TestAuthValidateCookie(t *testing.T) {
 	c.Value = ""
 	_, err := ValidateCookie(r, c)
 	if assert.Error(err) {
-		assert.Equal("Invalid cookie format", err.Error())
+		assert.Equal(err.Error(), "token contains an invalid number of segments")
 	}
+
 	c.Value = "1|2"
 	_, err = ValidateCookie(r, c)
 	if assert.Error(err) {
-		assert.Equal("Invalid cookie format", err.Error())
-	}
-	c.Value = "1|2|3|4"
-	_, err = ValidateCookie(r, c)
-	if assert.Error(err) {
-		assert.Equal("Invalid cookie format", err.Error())
+		assert.Equal(err.Error(), "token contains an invalid number of segments")
 	}
 
-	// Should catch invalid mac
-	c.Value = "MQ==|2|3"
+	// Should catch invalid signature
+	c.Value = "eyJhbGciOiJIUzM4NCIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJhcHAuZXhhbXBsZS5jb20iLCJzdWIiOiJ0ZXN0QGV4YW1wbGUuY29tIiwiZXhwIjoxNjYxMjEzNjk3LCJuYmYiOjE2NjExNzA0OTcsImlhdCI6MTY2MTE3MDQ5N30.P_hAcsmcGB0LpeekD3_1JlIYslOuMCBZhS-qAwY-Bm_p8VjE2arAZiGWB5jV9SQi"
 	_, err = ValidateCookie(r, c)
 	if assert.Error(err) {
-		assert.Equal("Invalid cookie mac", err.Error())
+		assert.Equal("signature is invalid", err.Error())
 	}
 
 	// Should catch expired
@@ -356,9 +351,7 @@ func TestAuthMakeCookie(t *testing.T) {
 	r.Header.Add("X-Forwarded-Host", "app.example.com")
 
 	c := MakeCookie(r, "test@example.com")
-	assert.Equal("_forward_auth", c.Name)
-	parts := strings.Split(c.Value, "|")
-	assert.Len(parts, 3, "cookie should be 3 parts")
+	assert.Equal("_auth_token", c.Name)
 	_, err := ValidateCookie(r, c)
 	assert.Nil(err, "should generate valid cookie")
 	assert.Equal("/", c.Path)
@@ -383,20 +376,20 @@ func TestAuthMakeCSRFCookie(t *testing.T) {
 
 	// No cookie domain or auth url
 	c := MakeCSRFCookie(r, "12345678901234567890123456789012")
-	assert.Equal("_forward_auth_csrf_123456", c.Name)
+	assert.Equal("_auth_csrf_123456", c.Name)
 	assert.Equal("app.example.com", c.Domain)
 
 	// With cookie domain but no auth url
 	config.CookieDomains = []CookieDomain{*NewCookieDomain("example.com")}
 	c = MakeCSRFCookie(r, "12222278901234567890123456789012")
-	assert.Equal("_forward_auth_csrf_122222", c.Name)
+	assert.Equal("_auth_csrf_122222", c.Name)
 	assert.Equal("app.example.com", c.Domain)
 
 	// With cookie domain and auth url
 	config.AuthHost = "auth.example.com"
 	config.CookieDomains = []CookieDomain{*NewCookieDomain("example.com")}
 	c = MakeCSRFCookie(r, "12333378901234567890123456789012")
-	assert.Equal("_forward_auth_csrf_123333", c.Name)
+	assert.Equal("_auth_csrf_123333", c.Name)
 	assert.Equal("example.com", c.Domain)
 }
 

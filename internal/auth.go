@@ -1,19 +1,16 @@
 package tfa
 
 import (
-	"crypto/hmac"
 	"crypto/rand"
-	"crypto/sha256"
-	"encoding/base64"
 	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
-	"strconv"
 	"strings"
 	"time"
 
 	"github.com/developStorm/go-forward-auth/internal/provider"
+	"github.com/golang-jwt/jwt/v4"
 )
 
 // Request Validation
@@ -21,40 +18,27 @@ import (
 // ValidateCookie verifies that a cookie matches the expected format of:
 // Cookie = hash(secret, cookie domain, email, expires)|expires|email
 func ValidateCookie(r *http.Request, c *http.Cookie) (string, error) {
-	parts := strings.Split(c.Value, "|")
+	token, err := jwt.ParseWithClaims(c.Value, &jwt.RegisteredClaims{}, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+		}
 
-	if len(parts) != 3 {
-		return "", errors.New("Invalid cookie format")
-	}
+		return config.Secret, nil
+	})
 
-	mac, err := base64.URLEncoding.DecodeString(parts[0])
 	if err != nil {
-		return "", errors.New("Unable to decode cookie mac")
+		if errors.Is(err, jwt.ErrTokenExpired) || errors.Is(err, jwt.ErrTokenNotValidYet) {
+			// Token is either expired or not active yet
+			return "", errors.New("Cookie has expired")
+		}
+		return "", err
 	}
 
-	expectedSignature := cookieSignature(r, parts[2], parts[1])
-	expected, err := base64.URLEncoding.DecodeString(expectedSignature)
-	if err != nil {
-		return "", errors.New("Unable to generate mac")
+	if claims, ok := token.Claims.(*jwt.RegisteredClaims); ok && token.Valid {
+		return claims.Subject, nil
 	}
 
-	// Valid token?
-	if !hmac.Equal(mac, expected) {
-		return "", errors.New("Invalid cookie mac")
-	}
-
-	expires, err := strconv.ParseInt(parts[1], 10, 64)
-	if err != nil {
-		return "", errors.New("Unable to parse cookie expiry")
-	}
-
-	// Has it expired?
-	if time.Unix(expires, 0).Before(time.Now()) {
-		return "", errors.New("Cookie has expired")
-	}
-
-	// Looks valid
-	return parts[2], nil
+	return "", err
 }
 
 // ValidateEmail checks if the given email address matches either a whitelisted
@@ -192,12 +176,18 @@ func useAuthDomain(r *http.Request) (bool, string) {
 // MakeCookie creates an auth cookie
 func MakeCookie(r *http.Request, email string) *http.Cookie {
 	expires := cookieExpiry()
-	mac := cookieSignature(r, email, fmt.Sprintf("%d", expires.Unix()))
-	value := fmt.Sprintf("%s|%d|%s", mac, expires.Unix(), email)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS384, jwt.RegisteredClaims{
+		Subject:   email,
+		Issuer:    cookieDomain(r),
+		IssuedAt:  jwt.NewNumericDate(time.Now()),
+		NotBefore: jwt.NewNumericDate(time.Now()),
+		ExpiresAt: jwt.NewNumericDate(cookieExpiry()),
+	})
+	tokenString, _ := token.SignedString(config.Secret)
 
 	return &http.Cookie{
 		Name:     config.CookieName,
-		Value:    value,
+		Value:    tokenString,
 		Path:     "/",
 		Domain:   cookieDomain(r),
 		HttpOnly: true,
@@ -338,15 +328,6 @@ func matchCookieDomains(domain string) (bool, string) {
 	}
 
 	return false, p[0]
-}
-
-// Create cookie hmac
-func cookieSignature(r *http.Request, email, expires string) string {
-	hash := hmac.New(sha256.New, config.Secret)
-	hash.Write([]byte(cookieDomain(r)))
-	hash.Write([]byte(email))
-	hash.Write([]byte(expires))
-	return base64.URLEncoding.EncodeToString(hash.Sum(nil))
 }
 
 // Get cookie expiry

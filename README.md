@@ -154,8 +154,8 @@ Application Options:
   --config=                                             Path to config file [$CONFIG]
   --cookie-domain=                                      Domain to set auth cookie on, can be set multiple times [$COOKIE_DOMAIN]
   --insecure-cookie                                     Use insecure cookies [$INSECURE_COOKIE]
-  --cookie-name=                                        Cookie Name (default: _forward_auth) [$COOKIE_NAME]
-  --csrf-cookie-name=                                   CSRF Cookie Name (default: _forward_auth_csrf) [$CSRF_COOKIE_NAME]
+  --cookie-name=                                        Cookie Name (default: _auth_token) [$COOKIE_NAME]
+  --csrf-cookie-name=                                   CSRF Cookie Name (default: _auth_csrf) [$CSRF_COOKIE_NAME]
   --default-action=[auth|allow]                         Default action (default: auth) [$DEFAULT_ACTION]
   --default-provider=[google|oidc|generic-oauth]        Default provider (default: google) [$DEFAULT_PROVIDER]
   --domain=                                             Only allow given email domains, can be set multiple times [$DOMAIN]
@@ -248,13 +248,13 @@ All options can be supplied in any of the following ways, in the following prece
 
   Set the name of the cookie set following successful authentication.
 
-  Default: `_forward_auth`
+  Default: `_auth_token`
 
 - `csrf-cookie-name`
 
   Set the name of the temporary CSRF cookie set during authentication.
 
-  Default: `_forward_auth_csrf`
+  Default: `_auth_csrf`
 
 - `default-action`
 

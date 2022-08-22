@@ -96,18 +96,9 @@ func TestServerAuthHandlerInvalid(t *testing.T) {
 		"\"insecure-cookie\" config option to permit cookies via http.", logs[0].Message)
 	assert.Equal(logrus.WarnLevel, logs[0].Level)
 
-	// Should catch invalid cookie
-	req = newDefaultHttpRequest("/foo")
-	c := MakeCookie(req, "test@example.com")
-	parts = strings.Split(c.Value, "|")
-	c.Value = fmt.Sprintf("bad|%s|%s", parts[1], parts[2])
-
-	res, _ = doHttpRequest(req, c)
-	assert.Equal(401, res.StatusCode, "invalid cookie should not be authorised")
-
 	// Should validate email
 	req = newDefaultHttpRequest("/foo")
-	c = MakeCookie(req, "test@example.com")
+	c := MakeCookie(req, "test@example.com")
 	config.Domains = []string{"test.com"}
 
 	res, _ = doHttpRequest(req, c)
