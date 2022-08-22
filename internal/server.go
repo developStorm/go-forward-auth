@@ -5,8 +5,8 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/developStorm/go-forward-auth/internal/provider"
 	"github.com/sirupsen/logrus"
-	"github.com/thomseddon/traefik-forward-auth/internal/provider"
 	"github.com/traefik/traefik/v2/pkg/rules"
 )
 
