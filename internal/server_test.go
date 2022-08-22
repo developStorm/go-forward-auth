@@ -205,7 +205,7 @@ func TestServerAuthCallback(t *testing.T) {
 
 	fwd, _ := res.Location()
 	assert.Equal("http", fwd.Scheme, "valid request should be redirected to return url")
-	assert.Equal("redirect", fwd.Host, "valid request should be redirected to return url")
+	assert.Equal("example.com", fwd.Host, "valid request should be redirected to return url")
 	assert.Equal("", fwd.Path, "valid request should be redirected to return url")
 }
 
