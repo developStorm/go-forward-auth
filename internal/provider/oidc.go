@@ -2,9 +2,12 @@ package provider
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"os"
 
 	"github.com/coreos/go-oidc/v3/oidc"
+	"github.com/sirupsen/logrus"
 	"golang.org/x/oauth2"
 )
 
@@ -90,10 +93,33 @@ func (o *OIDC) GetUser(token string) (User, error) {
 		return user, err
 	}
 
+	rawClaim := new(json.RawMessage)
+	if err := idToken.Claims(&rawClaim); err != nil {
+		log := NewDefaultLogger()
+		log.WithFields(logrus.Fields{
+			"idtoken_claims": rawClaim,
+		}).Debug("Raw ID Token Claims")
+	}
+
 	// Extract custom claims
 	if err := idToken.Claims(&user); err != nil {
 		return user, err
 	}
 
 	return user, nil
+}
+
+func NewDefaultLogger() *logrus.Logger {
+	// Setup logger
+	log := logrus.StandardLogger()
+	logrus.SetOutput(os.Stdout)
+
+	logrus.SetFormatter(&logrus.TextFormatter{
+		DisableColors: true,
+		FullTimestamp: true,
+	})
+
+	logrus.SetLevel(logrus.TraceLevel)
+
+	return log
 }

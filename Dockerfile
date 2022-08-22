@@ -1,7 +1,6 @@
 FROM golang:1.18-alpine as builder
 
 # Setup
-RUN mkdir -p /go/src/github.com/developStorm/go-forward-auth
 WORKDIR /go/src/github.com/developStorm/go-forward-auth
 
 # Add libraries

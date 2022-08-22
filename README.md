@@ -1,4 +1,4 @@
-# Traefik Forward Auth ![Build Status](https://img.shields.io/github/workflow/status/developStorm/go-forward-auth/CI) [![Go Report Card](https://goreportcard.com/badge/github.com/developStorm/go-forward-auth)](https://goreportcard.com/report/github.com/developStorm/go-forward-auth) ![Docker Pulls](https://img.shields.io/docker/pulls/developStorm/go-forward-auth.svg) [![GitHub release](https://img.shields.io/github/release/developStorm/go-forward-auth.svg)](https://GitHub.com/developStorm/go-forward-auth/releases/)
+# Traefik Forward Auth ![Build Status](https://img.shields.io/github/workflow/status/developStorm/go-forward-auth/CI) [![Go Report Card](https://goreportcard.com/badge/github.com/developStorm/go-forward-auth)](https://goreportcard.com/report/github.com/developStorm/go-forward-auth)
 
 A minimal forward authentication service that provides OAuth/SSO login and authentication for the [traefik](https://github.com/containous/traefik) reverse proxy/load balancer.
 

@@ -70,9 +70,4 @@ jobs:
           tags: ${{ steps.image-tag.outputs.TAG }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          platforms: linux/amd64,linux/arm64
-          build-args: |
-            GITHUB_SHA=${{ github.sha }}
-            GITHUB_RUN_ID=${{ github.run_id }}
-            GITHUB_SERVER_URL=${{ github.server_url }}
-            GITHUB_REPOSITORY=${{ github.repository }}
+          platforms: linux/amd64
