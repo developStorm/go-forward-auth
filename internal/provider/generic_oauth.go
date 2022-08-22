@@ -57,17 +57,17 @@ func (o *GenericOAuth) GetLoginURL(redirectURI, state string) string {
 }
 
 // ExchangeCode exchanges the given redirect uri and code for a token
-func (o *GenericOAuth) ExchangeCode(redirectURI, code string) (string, error) {
+func (o *GenericOAuth) ExchangeCode(redirectURI, code string) (*oauth2.Token, error) {
 	token, err := o.OAuthExchangeCode(redirectURI, code)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return token.AccessToken, nil
+	return token, nil
 }
 
 // GetUser uses the given token and returns a complete provider.User object
-func (o *GenericOAuth) GetUser(token string) (User, error) {
+func (o *GenericOAuth) GetUser(token *oauth2.Token) (User, error) {
 	var user User
 
 	req, err := http.NewRequest("GET", o.UserURL, nil)
@@ -79,7 +79,7 @@ func (o *GenericOAuth) GetUser(token string) (User, error) {
 		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
 	} else if o.TokenStyle == "query" {
 		q := req.URL.Query()
-		q.Add("access_token", token)
+		q.Add("access_token", token.AccessToken)
 		req.URL.RawQuery = q.Encode()
 	}
 

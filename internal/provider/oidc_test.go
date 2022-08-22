@@ -8,11 +8,10 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"strconv"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/oauth2"
 	jose "gopkg.in/square/go-jose.v2"
 )
 
@@ -102,27 +101,17 @@ func TestOIDCExchangeCode(t *testing.T) {
 
 	token, err := provider.ExchangeCode("http://example.com/_oauth", "code")
 	assert.Nil(err)
-	assert.Equal("id_123456789", token)
+	assert.Equal("123456789", token.AccessToken)
 }
 
 func TestOIDCGetUser(t *testing.T) {
 	assert := assert.New(t)
 
-	provider, server, serverURL, key := setupOIDCTest(t, nil)
+	provider, server, _, _ := setupOIDCTest(t, nil)
 	defer server.Close()
 
-	// Generate JWT
-	token := key.sign(t, []byte(`{
-		"iss": "`+serverURL.String()+`",
-		"exp":`+strconv.FormatInt(time.Now().Add(time.Hour).Unix(), 10)+`,
-		"aud": "idtest",
-		"sub": "1",
-		"email": "example@example.com",
-		"email_verified": true
-	}`))
-
 	// Get user
-	user, err := provider.GetUser(token)
+	user, err := provider.GetUser(&oauth2.Token{})
 	assert.Nil(err)
 	assert.Equal("example@example.com", user.Email)
 }
@@ -193,6 +182,7 @@ func (s *OIDCServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			"issuer":"`+s.url.String()+`",
 			"authorization_endpoint":"`+s.url.String()+`/auth",
 			"token_endpoint":"`+s.url.String()+`/token",
+			"userinfo_endpoint": "`+s.url.String()+`/userinfo",
 			"jwks_uri":"`+s.url.String()+`/jwks"
 		}`)
 	} else if r.URL.Path == "/token" {
@@ -213,6 +203,15 @@ func (s *OIDCServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		// Key request
 		w.Header().Set("Content-Type", "application/json")
 		fmt.Fprint(w, `{"keys":[`+s.key.publicJWK(s.t)+`]}`)
+	} else if r.URL.Path == "/userinfo" {
+		// Userinfo request
+		w.Header().Set("Content-Type", "application/json")
+		fmt.Fprint(w, `{
+				"sub": "user",
+				"profile": "",
+				"email": "example@example.com",
+				"email_verified": true
+			}`)
 	} else {
 		s.t.Fatal("Unrecognised request: ", r.URL, string(body))
 	}

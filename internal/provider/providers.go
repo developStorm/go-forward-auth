@@ -18,13 +18,9 @@ type Providers struct {
 type Provider interface {
 	Name() string
 	GetLoginURL(redirectURI, state string) string
-	ExchangeCode(redirectURI, code string) (string, error)
-	GetUser(token string) (User, error)
+	ExchangeCode(redirectURI, code string) (*oauth2.Token, error)
+	GetUser(token *oauth2.Token) (User, error)
 	Setup() error
-}
-
-type token struct {
-	Token string `json:"access_token"`
 }
 
 // User is the authenticated user

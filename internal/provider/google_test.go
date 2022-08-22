@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/oauth2"
 )
 
 // Tests
@@ -118,7 +119,7 @@ func TestGoogleExchangeCode(t *testing.T) {
 
 	token, err := p.ExchangeCode("http://example.com/_oauth", "code")
 	assert.Nil(err)
-	assert.Equal("123456789", token)
+	assert.Equal("123456789", token.AccessToken)
 }
 
 func TestGoogleGetUser(t *testing.T) {
@@ -141,7 +142,10 @@ func TestGoogleGetUser(t *testing.T) {
 		},
 	}
 
-	user, err := p.GetUser("123456789")
+	token := &oauth2.Token{
+		AccessToken: "123456789",
+	}
+	user, err := p.GetUser(token)
 	assert.Nil(err)
 
 	assert.Equal("example@example.com", user.Email)

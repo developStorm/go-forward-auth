@@ -2,12 +2,9 @@ package provider
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
-	"os"
 
 	"github.com/coreos/go-oidc/v3/oidc"
-	"github.com/sirupsen/logrus"
 	"golang.org/x/oauth2"
 )
 
@@ -68,58 +65,24 @@ func (o *OIDC) GetLoginURL(redirectURI, state string) string {
 }
 
 // ExchangeCode exchanges the given redirect uri and code for a token
-func (o *OIDC) ExchangeCode(redirectURI, code string) (string, error) {
+func (o *OIDC) ExchangeCode(redirectURI, code string) (*oauth2.Token, error) {
 	token, err := o.OAuthExchangeCode(redirectURI, code)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-
-	// Extract ID token
-	rawIDToken, ok := token.Extra("id_token").(string)
-	if !ok {
-		return "", errors.New("Missing id_token")
-	}
-
-	return rawIDToken, nil
+	return token, nil
 }
 
 // GetUser uses the given token and returns a complete provider.User object
-func (o *OIDC) GetUser(token string) (User, error) {
+func (o *OIDC) GetUser(token *oauth2.Token) (User, error) {
 	var user User
 
-	// Parse & Verify ID Token
-	idToken, err := o.verifier.Verify(o.ctx, token)
+	userInfo, err := o.provider.UserInfo(o.ctx, oauth2.StaticTokenSource(token))
 	if err != nil {
 		return user, err
 	}
 
-	rawClaim := new(json.RawMessage)
-	if err := idToken.Claims(&rawClaim); err != nil {
-		log := NewDefaultLogger()
-		log.WithFields(logrus.Fields{
-			"idtoken_claims": rawClaim,
-		}).Debug("Raw ID Token Claims")
-	}
-
-	// Extract custom claims
-	if err := idToken.Claims(&user); err != nil {
-		return user, err
-	}
+	user.Email = userInfo.Email
 
 	return user, nil
-}
-
-func NewDefaultLogger() *logrus.Logger {
-	// Setup logger
-	log := logrus.StandardLogger()
-	logrus.SetOutput(os.Stdout)
-
-	logrus.SetFormatter(&logrus.TextFormatter{
-		DisableColors: true,
-		FullTimestamp: true,
-	})
-
-	logrus.SetLevel(logrus.TraceLevel)
-
-	return log
 }

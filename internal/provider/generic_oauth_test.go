@@ -106,7 +106,7 @@ func TestGenericOAuthExchangeCode(t *testing.T) {
 
 	token, err := p.ExchangeCode("http://example.com/_oauth", "code")
 	assert.Nil(err)
-	assert.Equal("123456789", token)
+	assert.Equal("123456789", token.AccessToken)
 }
 
 func TestGenericOAuthGetUser(t *testing.T) {
@@ -133,7 +133,10 @@ func TestGenericOAuthGetUser(t *testing.T) {
 	// AuthStyleInHeader is attempted
 	p.Config.Endpoint.AuthStyle = oauth2.AuthStyleInParams
 
-	user, err := p.GetUser("123456789")
+	token := &oauth2.Token{
+		AccessToken: "123456789",
+	}
+	user, err := p.GetUser(token)
 	assert.Nil(err)
 
 	assert.Equal("example@example.com", user.Email)

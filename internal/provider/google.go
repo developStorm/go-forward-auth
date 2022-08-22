@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+
+	"golang.org/x/oauth2"
 )
 
 // Google provider
@@ -72,7 +74,7 @@ func (g *Google) GetLoginURL(redirectURI, state string) string {
 }
 
 // ExchangeCode exchanges the given redirect uri and code for a token
-func (g *Google) ExchangeCode(redirectURI, code string) (string, error) {
+func (g *Google) ExchangeCode(redirectURI, code string) (*oauth2.Token, error) {
 	form := url.Values{}
 	form.Set("client_id", g.ClientID)
 	form.Set("client_secret", g.ClientSecret)
@@ -82,18 +84,23 @@ func (g *Google) ExchangeCode(redirectURI, code string) (string, error) {
 
 	res, err := http.PostForm(g.TokenURL.String(), form)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	var token token
+	var token struct {
+		Token string `json:"access_token"`
+	}
+
 	defer res.Body.Close()
 	err = json.NewDecoder(res.Body).Decode(&token)
 
-	return token.Token, err
+	return &oauth2.Token{
+		AccessToken: token.Token,
+	}, err
 }
 
 // GetUser uses the given token and returns a complete provider.User object
-func (g *Google) GetUser(token string) (User, error) {
+func (g *Google) GetUser(token *oauth2.Token) (User, error) {
 	var user User
 
 	client := &http.Client{}
@@ -102,7 +109,7 @@ func (g *Google) GetUser(token string) (User, error) {
 		return user, err
 	}
 
-	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token.AccessToken))
 	res, err := client.Do(req)
 	if err != nil {
 		return user, err
