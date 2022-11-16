@@ -35,7 +35,7 @@ func TestAuthValidateCookie(t *testing.T) {
 	}
 
 	// Should catch invalid signature
-	c.Value = "eyJhbGciOiJIUzM4NCIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJhcHAuZXhhbXBsZS5jb20iLCJzdWIiOiJ0ZXN0QGV4YW1wbGUuY29tIiwiZXhwIjoxNjYxMjEzNjk3LCJuYmYiOjE2NjExNzA0OTcsImlhdCI6MTY2MTE3MDQ5N30.P_hAcsmcGB0LpeekD3_1JlIYslOuMCBZhS-qAwY-Bm_p8VjE2arAZiGWB5jV9SQi"
+	c.Value = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
 	_, err = ValidateCookie(r, c)
 	if assert.Error(err) {
 		assert.Equal("signature is invalid", err.Error())
