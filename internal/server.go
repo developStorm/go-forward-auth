@@ -7,12 +7,12 @@ import (
 
 	"github.com/developStorm/go-forward-auth/internal/provider"
 	"github.com/sirupsen/logrus"
-	"github.com/traefik/traefik/v2/pkg/rules"
+	muxer "github.com/traefik/traefik/v2/pkg/muxer/http"
 )
 
 // Server contains router and handler methods
 type Server struct {
-	router *rules.Router
+	router *muxer.Muxer
 }
 
 // NewServer creates a new server object and builds router
@@ -24,7 +24,7 @@ func NewServer() *Server {
 
 func (s *Server) buildRoutes() {
 	var err error
-	s.router, err = rules.NewRouter()
+	s.router, err = muxer.NewMuxer()
 	if err != nil {
 		log.Fatal(err)
 	}
