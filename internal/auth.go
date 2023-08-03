@@ -193,7 +193,7 @@ func MakeCookie(r *http.Request, email string) *http.Cookie {
 		HttpOnly: true,
 		Secure:   !config.InsecureCookie,
 		Expires:  expires,
-		SameSite: http.SameSiteStrictMode,
+		SameSite: http.SameSiteLaxMode,
 	}
 }
 
@@ -228,7 +228,7 @@ func MakeCSRFCookie(r *http.Request, nonce string) *http.Cookie {
 		HttpOnly: true,
 		Secure:   !config.InsecureCookie,
 		Expires:  time.Now().Local().Add(time.Hour * 1),
-		SameSite: http.SameSiteStrictMode,
+		SameSite: http.SameSiteLaxMode,
 	}
 }
 
