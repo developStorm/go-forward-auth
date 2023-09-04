@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 
 	"golang.org/x/oauth2"
@@ -76,7 +75,7 @@ func (o *GenericOAuth) GetUser(token *oauth2.Token) (User, error) {
 	}
 
 	if o.TokenStyle == "header" {
-		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
+		token.SetAuthHeader(req)
 	} else if o.TokenStyle == "query" {
 		q := req.URL.Query()
 		q.Add("access_token", token.AccessToken)
